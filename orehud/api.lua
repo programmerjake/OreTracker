@@ -2,7 +2,10 @@
 -- Adds an "ore" node to track, only if that node actually is a valid node
 orehud.add_ore = function(orename)
     if minetest.registered_nodes[orename] then
-        table.insert(orehud.ores, orename)
+        if orehud.ores_set[orename] == nil then
+            orehud.ores_set[orename] = true
+            table.insert(orehud.ores, orename)
+        end
     else
         minetest.log("action", "[oretracker-orehud] Failed to add '"..orename.."' as it is a unregistered node.")
     end

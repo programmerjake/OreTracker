@@ -42,7 +42,27 @@ minetest.log("action", "[oretracker-orehud] Detected game "..orehud.gamemode..".
 
 -- Form a container to track what ores we want to follow
 orehud.ores = {}
-
+orehud.ores_set = {}
+orehud.ignore_set = {
+    ["air"] = true,
+    ["mcl_blackstone:blackstone"] = true,
+    ["mcl_core:andesite"] = true,
+    ["mcl_core:clay"] = true,
+    ["mcl_core:coarse_dirt"] = true,
+    ["mcl_core:diorite"] = true,
+    ["mcl_core:dirt"] = true,
+    ["mcl_core:granite"] = true,
+    ["mcl_core:gravel"] = true,
+    ["mcl_core:lava_source"] = true,
+    ["mcl_core:redsand"] = true,
+    ["mcl_core:redsandstone"] = true,
+    ["mcl_core:water_source"] = true,
+    ["mcl_deepslate:deepslate"] = true,
+    ["mcl_deepslate:tuff"] = true,
+    ["mcl_nether:magma"] = true,
+    ["mcl_nether:nether_lava_source"] = true,
+    ["mcl_nether:soul_sand"] = true,
+}
 dofile(orehud.modpath .. "/api.lua")
 
 --[[
@@ -90,8 +110,12 @@ end
 ]]
 
 orehud.add_ores = function ()
-    for _, item in ipairs(minetest.registered_ores) do
-        orehud.add_ore(item)
+    for _, item in pairs(minetest.registered_ores) do
+        if type(item.ore) == "string" and item.ore_type ~= "stratum" and item.ore_type ~= "sheet" then
+            if orehud.ignore_set[item.ore] == nil then
+                orehud.add_ore(item.ore)
+            end
+        end
     end
 end
 
