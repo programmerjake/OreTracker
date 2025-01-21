@@ -40,11 +40,35 @@ end
 
 minetest.log("action", "[oretracker-orehud] Detected game "..orehud.gamemode..".")
 
--- Form a container to track what ores we want to follow
+-- a list of what ore names we want to follow
 orehud.ores = {}
-orehud.ores_set = {}
+-- a map from ore names to the corresponding ore colors, also used to prevent duplicates in orehud.ores
+orehud.ore_colors = {}
+-- ore names which should be ignored despite being in registered_ores
 orehud.ignore_set = {
     ["air"] = true,
+    ["default:clay"] = true,
+    ["default:dirt"] = true,
+    ["default:gravel"] = true,
+    ["default:lava_source"] = true,
+    ["default:silver_sand"] = true,
+    ["df_underworld_items:glowstone"] = true,
+    ["ethereal:sandy"] = true,
+    ["everness:bone"] = true,
+    ["everness:coral_desert_stone"] = true,
+    ["everness:coral_dirt"] = true,
+    ["everness:coral_sand"] = true,
+    ["everness:crystal_dirt"] = true,
+    ["everness:crystal_sand"] = true,
+    ["everness:cursed_dirt"] = true,
+    ["everness:cursed_mud"] = true,
+    ["everness:cursed_sand"] = true,
+    ["everness:mineral_stone"] = true,
+    ["everness:sulfur_stone"] = true,
+    ["lootchests_default:barrel_marker"] = true,
+    ["lootchests_default:ocean_chest_marker"] = true,
+    ["lootchests_default:stone_chest_marker"] = true,
+    ["lootchests_magic_materials:rune_chest_marker"] = true,
     ["mcl_blackstone:blackstone"] = true,
     ["mcl_core:andesite"] = true,
     ["mcl_core:clay"] = true,
@@ -62,6 +86,20 @@ orehud.ignore_set = {
     ["mcl_nether:magma"] = true,
     ["mcl_nether:nether_lava_source"] = true,
     ["mcl_nether:soul_sand"] = true,
+    ["nether:glowstone"] = true,
+    ["nether:lava_crust"] = true,
+    ["nether:sand"] = true,
+    ["nssb:boum_morentir"] = true,
+    ["nssb:fall_morentir"] = true,
+    ["nssb:morelentir"] = true,
+    ["nssb:morentir"] = true,
+    ["nssb:morlote"] = true,
+    ["nssb:mornar"] = true,
+    ["nssb:morvilya"] = true,
+    ["nssm:ant_dirt"] = true,
+    ["nssm:modders_block"] = true,
+    ["nssm:morwa_statue"] = true,
+    ["nssm:web"] = true,
 }
 dofile(orehud.modpath .. "/api.lua")
 
@@ -117,18 +155,44 @@ orehud.add_ores = function ()
             end
         end
     end
+    local extra_ores = {
+        "caverealms:glow_amethyst_ore",
+        "caverealms:glow_emerald_ore",
+        "caverealms:glow_ore",
+        "caverealms:glow_ruby_ore",
+        "df_mapitems:glow_ruby_ore",
+        "lootchests_default:barrel",
+        "lootchests_default:basket",
+        "lootchests_default:ocean_chest",
+        "lootchests_default:stone_chest",
+        "lootchests_default:urn",
+        "lootchests_magic_materials:rune_chest",
+        "lootchests_magic_materials:rune_urn",
+        "nssb:life_energy_ore",
+        "nssb:moranga",
+        "technic:mineral_sulfur",
+    }
+    for _, name in ipairs(extra_ores) do
+        if minetest.registered_nodes[name] then
+            orehud.add_ore(name)
+        end
+    end
 end
 
 minetest.register_on_mods_loaded(function()
     orehud.add_ores()
-    local size = 0
-    local result = "Ores: "
+    local result = "Ores and colors:\n"
+    local line = ""
     for i, v in ipairs(orehud.ores) do
-        result = result..v.." "
-        size = size + 1
+        local item = string.format("[\"%s\"] = #%06x, ", v, orehud.ore_colors[v])
+        if true or #line + #item >= 80 and line ~= "" then
+            result = result .. line .. "\n"
+            line = ""
+        end
+        line = line .. item
     end
-    minetest.log("action", "[oretracker-orehud] Found "..size.." ores configured.")
-    minetest.log("action", "[oretracker-orehud] "..result)
+    minetest.log("action", "[oretracker-orehud] Found " .. #orehud.ores .. " ores configured.")
+    minetest.log("action", "[oretracker-orehud] " .. result .. line)
 end)
 
 -- Itterates an area of nodes for "ores", then adds a waypoint at that nodes position for that "ore".
@@ -152,50 +216,7 @@ orehud.check_player = function(player)
             if distance <= orehud.detect_range*orehud.detect_range then
                 distance = string.format("%.0f", math.sqrt(distance))
                 local block = "?"
-                local color = 0xffffff
-		local def = minetest.registered_nodes[node.name] or nil
-		color = 0xc8c84b
-                --[[if string.find(node.name, "coal") then
-                    block = "Coa"
-                    color = 0xc8c8c8
-                elseif string.find(node.name, "iron") then
-                    block = "Iro"
-                    color = 0xaf644b
-                elseif string.find(node.name, "gold") then
-                    block = "Gol"
-                    color = 0xc8c84b
-                elseif string.find(node.name, "mese") then
-                    block = "Mes"
-                    color = 0xffff4b
-                elseif string.find(node.name, "diamond") then
-                    block = "Dia"
-                    color = 0x4bfafa
-                elseif string.find(node.name, "quartz") then
-                    block = "Qua"
-                    color = 0xc8c8c8
-                elseif string.find(node.name, "copper") then
-                    block = "Cop"
-                    color = 0xc86400
-                elseif string.find(node.name, "tin") then
-                    block = "Tin"
-                    color = 0xc8c8c8
-                elseif string.find(node.name, "debris") then
-                    block = "Deb"
-                    color = 0xaa644b
-                elseif string.find(node.name, "lapis") then
-                    block = "Lap"
-                    color = 0x4b4bc8
-                elseif string.find(node.name, "redstone") then
-                    block = "Red"
-                    color = 0xc81919
-                elseif string.find(node.name, "glowstone") then
-                    block = "Glo"
-                    color = 0xffff4b
-                elseif string.find(node.name, "lode") then -- nc_lode:ore
-                    block = "Lode"
-                    color = 0xaf644b
-                end
-		]]
+                local def = minetest.registered_nodes[node.name] or nil
                 if def ~= nil then
                     block = def.short_description or def.description
                 end
@@ -204,7 +225,7 @@ orehud.check_player = function(player)
                     block = node.name
                 end
                 -- Make a waypoint with the nodes name
-                orehud.add_pos(pname, area[i], block, color)
+                orehud.add_pos(pname, area[i], block, orehud.ore_colors[node.name])
             end
         end
     end
