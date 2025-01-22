@@ -19,7 +19,7 @@ Displays ore positions via the player's HUD.
 
 ## Xray
 
-Hides unwanted stone (and other varients) from view, only showing a empty node in it's wake.
+Hides unwanted stone (and other variants) from view, only showing a empty node in it's wake.
 
 > `/xray` toggles the unwanted stone from visible to invisible (on or off).
 
@@ -27,10 +27,10 @@ Yes, because xray interacts server side, all clients can make use of a single pl
 
 ## Common Issues
 
-* It was found that if the server crashes while a player is using xray, xray's nodes are kept. Created a special mode (fix_mode) to attempt to repair nodes which should return back to their original uppon detection. (If fix_mode is left on in production other players xrays can be overriden)
+* It was found that if the server crashes while a player is using xray, xray's nodes are kept. Created a special mode (fix_mode) to attempt to repair nodes which should return back to their original upon detection. (If fix_mode is left on in production other players xrays can be overriden)
 * It is possible to get xray nodes to say simply by logging off, xray attempts to cleanup nodes by players who are attempting to log out. (Please make an issue report with any logs and screenshots/video showing this still occurs)
 
 ## Things planned
 
-* Improve Xray and Orehud so the api can litterally add new nodes (so I don't need to release updates for others to add support for their mods/games)
+* Improve Xray and Orehud so the api can literally add new nodes (so I don't need to release updates for others to add support for their mods/games)
 * Possibly add a formspec for Xray so you could customize your xray, per player (i.e. know a node you don't want to see, just add it via the formspec)
