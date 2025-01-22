@@ -118,50 +118,6 @@ orehud.ignore_set = {
 }
 dofile(orehud.modpath .. "/api.lua")
 
---[[
--- Use api to assign ores we know/should be caring about
-if orehud.gamemode == "MCL2" or orehud.gamemode == "MCL5" then
-    orehud.add_ore("mcl_core:stone_with_coal")
-    orehud.add_ore("mcl_core:stone_with_iron")
-    orehud.add_ore("mcl_core:stone_with_gold")
-    orehud.add_ore("mcl_core:stone_with_redstone")
-    orehud.add_ore("mcl_core:stone_with_redstone_lit")
-    orehud.add_ore("mcl_core:stone_with_lapis")
-    orehud.add_ore("mcl_core:stone_with_emerald")
-    orehud.add_ore("mcl_core:stone_with_diamond")
-    orehud.add_ore("mcl_nether:quartz_ore") -- This fails on MCL2 :S (LOL, I didn't realize my test suite was MCL2, I though it was MCL5)
---    orehud.add_ore("mcl_nether:glowstone") -- By default this is disabled as glowstone isn't a "ore", but just uncomment this line to get it too
-end
-
-if orehud.gamemode == "MCL5" then
-    orehud.add_ore("mcl_copper:stone_with_copper")
-    orehud.add_ore("mcl_nether:ancient_debris")
-    orehud.add_ore("mcl_nether_gold:nether_gold_ore")
-    -- Deepslate ores now included
-    orehud.add_ore("mcl_deepslate:deepslate_with_iron")
-    orehud.add_ore("mcl_deepslate:deepslate_with_coal")
-    orehud.add_ore("mcl_deepslate:deepslate_with_gold")
-    orehud.add_ore("mcl_deepslate:deepslate_with_emerald")
-    orehud.add_ore("mcl_deepslate:deepslate_with_diamond")
-    orehud.add_ore("mcl_deepslate:deepslate_with_lapis")
-    orehud.add_ore("mcl_deepslate:deepslate_with_redstone")
-end
-
-if orehud.gamemode == "MTG" then
-    orehud.add_ore("default:stone_with_coal")
-    orehud.add_ore("default:stone_with_iron")
-    orehud.add_ore("default:stone_with_gold")
-    orehud.add_ore("default:stone_with_copper")
-    orehud.add_ore("default:stone_with_tin")
-    orehud.add_ore("default:stone_with_mese")
-    orehud.add_ore("default:stone_with_diamond")
-end
-
-if orehud.gamemode == "NC" then
-    orehud.add_ore("nc_lode:ore")
-end
-]]
-
 orehud.add_ores = function ()
     for _, item in pairs(minetest.registered_ores) do
         if type(item.ore) == "string" and item.ore_type ~= "stratum" and item.ore_type ~= "sheet" then
