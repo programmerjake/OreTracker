@@ -82,6 +82,9 @@ end
 
 if xray.gamemode == "NC" then
     xray.add_node("nc_terrain:stone") -- xray:nc_stone
+    for i = 1, nodecore.hard_stone_strata do
+        xray.add_node("nc_terrain:hard_stone_"..i) -- xray:nc_stone_<i>
+    end
 end
 
 -- Include our nodes so we can cleanup after ourselves
@@ -104,6 +107,9 @@ elseif xray.gamemode == "MCL2" or xray.gamemode == "MCL5" then
     xray.add_node("xray:mcl_deepslate")
 elseif xray.gamemode == "NC" then
     xray.add_node("xray:nc_stone")
+    for i = 1, nodecore.hard_stone_strata do
+        xray.add_node("xray:nc_hard_stone_"..i)
+    end
 end
 
 local size = 0

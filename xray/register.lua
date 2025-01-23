@@ -236,15 +236,25 @@ if xray.gamemode == "MCL5" then
 end
 
 if xray.gamemode == "NC" then
-    minetest.register_node("xray:nc_stone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 2, stone = 1, rock = 1},
-        drop = "nc_terrain:stone",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = nodecore.sounds("nc_terrain_stony")
-    })
+    local function register_nc_stone(name, drop)
+        local base = minetest.registered_nodes[drop]
+        if type(base) ~= "table" then
+            error("can't find base node: "..drop)
+        end
+        minetest.register_node(name, {
+            description = xray.S("Xray Stone"),
+            tiles = { "xray_stone.png" },
+            groups = table.copy(base.groups),
+            drop = drop,
+            drawtype = "glasslike",
+            sunlight_propagates = true,
+            legacy_mineral = true,
+            light_source = xray.light_level,
+            sounds = nodecore.sounds("nc_terrain_stony")
+        })
+    end
+    register_nc_stone("xray:nc_stone", "nc_terrain:stone")
+    for i = 1, nodecore.hard_stone_strata do
+        register_nc_stone("xray:nc_hard_stone_" .. i, "nc_terrain:hard_stone_" .. i)
+    end
 end
