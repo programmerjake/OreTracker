@@ -12,7 +12,7 @@ xray.p_stats = {}
 -- Do not set detect_range to a very high number it may cause extreme loads when there are multiple players with this range
 -- Recommended range is 6 blocks
 xray.detect_range = 6 -- Range in blocks
--- 0 or negative is instantanious updates (Which greatly impacts the server/client)
+-- 0 or negative is instantaneous updates (Which greatly impacts the server/client)
 -- Recommended frequency is 1 second.
 xray.scan_frequency = 1 -- Frequency in seconds
 -- Light level that xray nodes emit (Max is 14 min is 0)
