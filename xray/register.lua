@@ -1,260 +1,66 @@
+---@type string
+local game_mode
+if not minetest.registered_nodes["default:stone"] then
+    if not minetest.registered_nodes["mcl_core:stone"] then
+        if not minetest.registered_nodes["nc_terrain:stone"] then
+            game_mode = "N/A"
+        else
+            game_mode = "NC"
+        end
+    else
+        -- Attempt to determine if it's MCL5 or MCL2
+        if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
+            game_mode = "MCL2"
+        else
+            game_mode = "MCL5"
+        end
+    end
+else
+    game_mode = "MTG"
+end
+
+---@param old_xray_alias string
+---@param name string
+---@param tiles table?
+---@return string
+local function register_xrayable_node_and_alias(old_xray_alias, name, tiles)
+    local xray_name = xray.register_xrayable_node(name, tiles)
+    if xray_name then
+        minetest.register_alias(old_xray_alias, xray_name)
+    end
+    return xray_name
+end
 
 -- MTG
-if xray.gamemode == "MTG" then
-    minetest.register_node("xray:mtg_stone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 3, stone = 1},
-        drop = "default:cobble",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = default.node_sound_stone_defaults(),
-    })
-    minetest.register_node("xray:mtg_dstone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 3, stone = 1},
-        drop = "default:desert_cobble",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = default.node_sound_stone_defaults(),
-    })
-    minetest.register_node("xray:mtg_sstone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 3, stone = 1},
-        drop = "default:sandstone",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = default.node_sound_stone_defaults(),
-    })
-    minetest.register_node("xray:mtg_dsstone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 3, stone = 1},
-        drop = "default:desert_sandstone",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = default.node_sound_stone_defaults(),
-    })
-    minetest.register_node("xray:mtg_ssstone", {
-        description = xray.S("Xray Stone"),
-        tiles = {"xray_stone.png"},
-        groups = {cracky = 3, stone = 1},
-        drop = "default:silver_sandstone",
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = default.node_sound_stone_defaults(),
-    })
+if game_mode == "MTG" then
+    register_xrayable_node_and_alias("xray:mtg_stone", "default:stone")
+    register_xrayable_node_and_alias("xray:mtg_dstone", "default:desert_stone")
+    register_xrayable_node_and_alias("xray:mtg_sstone", "default:sandstone")
+    register_xrayable_node_and_alias("xray:mtg_dsstone", "default:desert_sandstone")
+    register_xrayable_node_and_alias("xray:mtg_ssstone", "default:silver_sandstone")
 end
 
 -- MCL (2 and 5)
-if xray.gamemode == "MCL2" or xray.gamemode == "MCL5" then
-    minetest.register_node("xray:mcl_stone", {
-        description = xray.S("Xray Stone"),
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        _doc_items_hidden = true,
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        stack_max = 1,
-        groups = {pickaxey=1, stone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        light_source = xray.light_level,
-        drop = 'mcl_core:cobble',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 6,
-        _mcl_hardness = 1.5,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_granite", {
-        description = xray.S("Xray Stone"),
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        _doc_items_hidden = true,
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        stack_max = 1,
-        groups = {pickaxey=1, stone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        light_source = xray.light_level,
-        drop = 'mcl_core:granite',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 6,
-        _mcl_hardness = 1.5,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_andesite", {
-        description = xray.S("Xray Stone"),
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        _doc_items_hidden = true,
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        stack_max = 1,
-        groups = {pickaxey=1, stone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        light_source = xray.light_level,
-        drop = 'mcl_core:andesite',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 6,
-        _mcl_hardness = 1.5,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_diorite", {
-        description = xray.S("Xray Stone"),
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        _doc_items_hidden = true,
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        light_source = xray.light_level,
-        stack_max = 1,
-        groups = {pickaxey=1, stone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        drop = 'mcl_core:diorite',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 6,
-        _mcl_hardness = 1.5,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_sstone", {
-        description = xray.S("Xray Stone"),
-        _doc_items_hidden = true,
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        light_source = xray.light_level,
-        stack_max = 1,
-        groups = {pickaxey=1, sandstone=1, normal_sandstone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        drop = 'mcl_core:sandstone',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 0.8,
-        _mcl_hardness = 0.8,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_rsstone", {
-        description = xray.S("Xray Stone"),
-        _doc_items_hidden = true,
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        tiles = {"xray_stone.png"},
-        is_ground_content = true,
-        light_source = xray.light_level,
-        stack_max = 1,
-        groups = {pickaxey=1, sandstone=1, normal_sandstone=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        drop = 'mcl_core:redsandstone',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 0.8,
-        _mcl_hardness = 0.8,
-        _mcl_silk_touch_drop = false,
-    })
+if game_mode == "MCL2" or game_mode == "MCL5" then
+    register_xrayable_node_and_alias("xray:mcl_stone", "mcl_core:stone")
+    register_xrayable_node_and_alias("xray:mcl_granite", "mcl_core:granite")
+    register_xrayable_node_and_alias("xray:mcl_andesite", "mcl_core:andesite")
+    register_xrayable_node_and_alias("xray:mcl_diorite", "mcl_core:diorite")
+    register_xrayable_node_and_alias("xray:mcl_sstone", "mcl_core:sandstone")
+    register_xrayable_node_and_alias("xray:mcl_rsstone", "mcl_core:redsandstone")
 end
 
 -- MCL (5 only)
-if xray.gamemode == "MCL5" then
-    minetest.register_node("xray:mcl_bstone", {
-        description = xray.S("Xray Stone"),
-        _doc_items_hidden = true,
-        tiles = {"xray_dark.png"},
-        light_source = xray.light_level,
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        is_ground_content = true,
-        stack_max = 1,
-        groups = {cracky = 3, pickaxey=2, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        drop = 'mcl_blackstone:blackstone',
-        _mcl_blast_resistance = 2,
-        _mcl_hardness = 2,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_basalt", {
-        description = xray.S("Xray Stone"),
-        _doc_items_hidden = true,
-        tiles = {"xray_dark.png"},
-        light_source = xray.light_level,
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        is_ground_content = true,
-        stack_max = 1,
-        groups = {cracky = 3, pickaxey=2, material_stone=1},
-        drop = 'mcl_blackstone:basalt',
-        _mcl_blast_resistance = 2,
-        _mcl_hardness = 2,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_netherrack", {
-        description = xray.S("Xray Stone"),
-        _doc_items_hidden = true,
-        light_source = xray.light_level,
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        stack_max = 1,
-        tiles = {"xray_nether.png"},
-        is_ground_content = true,
-        groups = {pickaxey=1, building_block=1, material_stone=1},
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        drop = 'mcl_nether:netherrack',
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 0.4,
-        _mcl_hardness = 0.4,
-        _mcl_silk_touch_drop = false,
-    })
-    minetest.register_node("xray:mcl_deepslate", {
-        description = xray.S("Xray Stone"),
-        _doc_items_longdesc = xray.S("An Invisible block"),
-        _doc_items_hidden = true,
-        light_source = xray.light_level,
-        tiles = { "xray_dark.png" },
-        paramtype2 = "facedir",
-        is_ground_content = true,
-        drawtype = "glasslike",
-        sunlight_propagates = true,
-        stack_max = 1,
-        groups = { pickaxey = 1, stone = 1, building_block = 1, material_stone = 1 },
-        drop = "mcl_deepslate:deepslate_cobbled",
-        sounds = mcl_sounds.node_sound_stone_defaults(),
-        _mcl_blast_resistance = 6,
-        _mcl_hardness = 3,
-        _mcl_silk_touch_drop = false,
-    })
+if game_mode == "MCL5" then
+    register_xrayable_node_and_alias("xray:mcl_bstone", "mcl_blackstone:blackstone", {"xray_dark.png"})
+    register_xrayable_node_and_alias("xray:mcl_basalt", "mcl_blackstone:basalt", {"xray_dark.png"})
+    register_xrayable_node_and_alias("xray:mcl_netherrack", "mcl_nether:netherrack", {"xray_nether.png"})
+    register_xrayable_node_and_alias("xray:mcl_deepslate", "mcl_deepslate:deepslate", {"xray_dark.png"})
 end
 
-if xray.gamemode == "NC" then
-    local function register_nc_stone(name, drop)
-        local base = minetest.registered_nodes[drop]
-        if type(base) ~= "table" then
-            error("can't find base node: "..drop)
-        end
-        minetest.register_node(name, {
-            description = xray.S("Xray Stone"),
-            tiles = { "xray_stone.png" },
-            groups = table.copy(base.groups),
-            drop = drop,
-            drawtype = "glasslike",
-            sunlight_propagates = true,
-            legacy_mineral = true,
-            light_source = xray.light_level,
-            sounds = nodecore.sounds("nc_terrain_stony")
-        })
-    end
-    register_nc_stone("xray:nc_stone", "nc_terrain:stone")
+if game_mode == "NC" then
+    register_xrayable_node_and_alias("xray:nc_stone", "nc_terrain:stone")
     for i = 1, nodecore.hard_stone_strata do
-        register_nc_stone("xray:nc_hard_stone_" .. i, "nc_terrain:hard_stone_" .. i)
+        register_xrayable_node_and_alias("xray:nc_hard_stone_" .. i, "nc_terrain:hard_stone_" .. i)
     end
 end
