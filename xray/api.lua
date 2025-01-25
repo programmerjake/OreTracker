@@ -1,214 +1,237 @@
+---@type table<string, string>
+xray.to_xray_node_map = {}
+---@type table<string, string>
+xray.from_xray_node_map = {}
+---@type string[]
+xray.xrayable_node_list = {}
 
--- Adds a node to track, only if that node actually is a valid node
-xray.add_node = function(nodename)
-    if minetest.registered_nodes[nodename] then
-        table.insert(xray.nodes, nodename)
-    else
-        minetest.log("action", "[oretracker-xray] Failed to add '"..nodename.."' as it is a unregistered node.")
+---@param name string
+---@param tiles table?
+---@return string?
+function xray.register_xrayable_node(name, tiles)
+    if minetest.registered_aliases[name] then
+        name = minetest.registered_aliases[name]
     end
-end
-
--- Swaps with one of the registered nodes that has the invisiblity factor
-xray.add_pos = function(pname, pos)
-    local current = minetest.get_node_or_nil(pos)
-    if current == nil then
-        minetest.log("action", "[oretracker-xray] Failed to obtain node at "..minetest.pos_to_string(pos).." for swap.")
+    assert(xray.from_xray_node_map[name] == nil, "can't register_xrayable_node on an xray node: " .. name)
+    if xray.to_xray_node_map[name] then
+        return xray.to_xray_node_map[name]
     end
-    current = current.name
-    --minetest.log("action", "[oretracker-xray] Swapping "..current)
-    local nps = xray.store[pname] or {}
-    table.insert(nps, pos)
-    -- Place a switch here to identify which kind of node would be best used here
-    if current == "default:stone" then -- Returns cobble rather than itself!
-        minetest.swap_node(pos, {name="xray:mtg_stone"})
-        xray.store[pname] = nps
-    elseif current == "mcl_core:stone" then -- Returns cobble rather than itself!
-        minetest.swap_node(pos, {name="xray:mcl_stone"})
-        xray.store[pname] = nps
-    else
-        -- Fix this so we can auto determine what to replace it with
-        for _, n in ipairs(xray.nodes) do
-            if string.sub(n, 0, 4) == "xray" then
-                local nod = ItemStack(n.." 1"):get_definition()
-                if nod.drop == current then
-                    --minetest.log("action", "[oretracker-xray] Located '"..n.."' for replacement.")
-                    minetest.swap_node(pos, {name=n})
-                    xray.store[pname] = nps
-                    break
-                else
-                    --minetest.log("action", "[oretracker-xray] '"..n.."' is not our current it's drop is '"..nod.drop.."'.")
-                end
+    local orig = minetest.registered_nodes[name]
+    if not orig then
+        minetest.log("action", "[oretracker-xray] Failed to add '" .. name .. "' as it is a unregistered node.")
+        return nil
+    end
+    orig = table.copy(orig)
+    local xray_name = "xray:" .. string.gsub(name, ":", "__")
+    local def = {
+        description = xray.S("Xray Stone"),
+        tiles = tiles or { "xray_stone.png" },
+        groups = orig.groups,
+        drop = orig.drop,
+        drawtype = "glasslike",
+        stack_max = 1,
+        sunlight_propagates = true,
+        legacy_mineral = true,
+        light_source = xray.light_level,
+        sounds = orig.sounds,
+    }
+    if def.drop == "" or def.drop == nil then
+        def.drop = name
+    end
+    for k, v in pairs(orig) do
+        if type(k) == "string" and string.sub(k, 1, 1) == "_" then
+            if type(v) == "table" then
+                v = table.copy(v)
             end
+            def[k] = v
         end
     end
-    --[[
-    if current == "default:stone" then
-        minetest.swap_node(pos, {name="xray:mtg_stone"})
-    elseif current == "default:desert_stone" then
-        minetest.swap_node(pos, {name="xray:mtg_dstone"})
-    elseif current == "default:sandstone" then
-        minetest.swap_node(pos, {name="xray:mtg_sstone"})
-    elseif current == "default:desert_sandstone" then
-        minetest.swap_node(pos, {name="xray:mtg_dsstone"})
-    elseif current == "default:silver_sandstone" then
-        minetest.swap_node(pos, {name="xray:mtg_ssstone"})
-    elseif current == "mcl_core:stone" then
-        minetest.swap_node(pos, {name="xray:mcl_stone"})
-    elseif current == "mcl_core:granite" then
-        minetest.swap_node(pos, {name="xray:mcl_granite"})
-    elseif current == "mcl_core:andesite" then
-        minetest.swap_node(pos, {name="xray:mcl_andesite"})
-    elseif current == "mcl_core:diorite" then
-        minetest.swap_node(pos, {name="xray:mcl_diorite"})
-    elseif current == "mcl_core:sandstone" then
-        minetest.swap_node(pos, {name="xray:mcl_sstone"})
-    elseif current == "mcl_core:redsandstone" then
-        minetest.swap_node(pos, {name="xray:mcl_rsstone"})
-    elseif current == "mcl_blackstone:blackstone" then
-        minetest.swap_node(pos, {name="xray:mcl_bstone"})
-    elseif current == "mcl_blackstone:basalt" then
-        minetest.swap_node(pos, {name="xray:mcl_basalt"})
-    elseif current == "mcl_nether:netherrack" then
-        minetest.swap_node(pos, {name="xray:mcl_netherrack"})
-    elseif current == "mcl_deepslate:deepslate" then
-        minetest.swap_node(pos, {name="xray:mcl_deepslate"})
-    elseif current == "nc_terrain:stone" then
-        minetest.swap_node(pos, {name="xray:nc_stone"})
-    end
-    ]]
+    minetest.register_node(":" .. xray_name, def)
+    table.insert(xray.xrayable_node_list, name)
+    xray.to_xray_node_map[name] = xray_name
+    xray.from_xray_node_map[xray_name] = name
+    return xray_name
 end
 
--- Clears all invisible nodes back to their originals (per player)
--- Not really needed since the nodes themselves will reset automagically
-xray.clear_pos = function(pname)
-    --local player = minetest.get_player_by_name(pname)
-    local wps = xray.store[pname] or {}
-    for i, v in ipairs(wps) do
-        local node = minetest.get_node_or_nil(v)
-        if node == nil then
-            minetest.log("action", "[oretracker-xray] Failed to obtain node at "..minetest.pos_to_string(v).." for revert ("..i..")")
+---@type table<integer, table<integer, table<integer, integer>>>
+xray.node_reference_counts = {}
+
+---@param x integer
+---@param y integer
+---@param z integer
+---@return integer
+function xray.get_node_reference_count(x, y, z)
+    local t3 = xray.node_reference_counts
+    local t2 = t3[x]
+    if t2 then
+        local t1 = t2[y]
+        if t1 then
+            return t1[z] or 0
         end
-        node = node.name
-        --minetest.log("action", "[oretracker-xray] Reverting "..current)
-        -- Place a switch here to identify what node should be put back here
-        if node == "xray:mtg_stone" then -- Returns cobble rather than itself!
-            minetest.swap_node(v, {name="default:stone"})
-        elseif node == "xray:mcl_stone" then -- Returns cobble rather than itself!
-            minetest.swap_node(v, {name="mcl_core:stone"})
-        else
-            -- Fix this so we can auto determine what to replace it with
-            for _, n in ipairs(xray.nodes) do
-                if string.sub(n, 0, 4) == "xray" then
-                    local nod = ItemStack(n.." 1"):get_definition()
-                    if n == node then
-                        --minetest.log("action", "[oretracker-xray] Located '"..n.."' for replacement.")
-                        minetest.swap_node(v, {name=nod.drop})
-                    else
-                        --minetest.log("action", "[oretracker-xray] '"..n.."' is not our current it's drop is '"..nod.drop.."'.")
-                    end
-                end
-            end
-        end
-        --[[
-        if node == "xray:mtg_stone" then
-            minetest.swap_node(v, {name="default:stone"})
-        elseif node == "xray:mtg_dstone" then
-            minetest.swap_node(v, {name="default:desert_stone"})
-        elseif node == "xray:mtg_sstone" then
-            minetest.swap_node(v, {name="default:sandstone"})
-        elseif node == "xray:mtg_dsstone" then
-            minetest.swap_node(v, {name="default:desert_sandstone"})
-        elseif node == "xray:mtg_ssstone" then
-            minetest.swap_node(v, {name="default:silver_sandstone"})
-        elseif node == "xray:mcl_stone" then
-            minetest.swap_node(v, {name="mcl_core:stone"})
-        elseif node == "xray:mcl_granite" then
-            minetest.swap_node(v, {name="mcl_core:granite"})
-        elseif node == "xray:mcl_andesite" then
-            minetest.swap_node(v, {name="mcl_core:andesite"})
-        elseif node == "xray:mcl_diorite" then
-            minetest.swap_node(v, {name="mcl_core:diorite"})
-        elseif node == "xray:mcl_sstone" then
-            minetest.swap_node(v, {name="mcl_core:sandstone"})
-        elseif node == "xray:mcl_rsstone" then
-            minetest.swap_node(v, {name="mcl_core:redsandstone"})
-        elseif node == "xray:mcl_bstone" then
-            minetest.swap_node(v, {name="mcl_blackstone:blackstone"})
-        elseif node == "xray:mcl_basalt" then
-            minetest.swap_node(v, {name="mcl_blackstone:basalt"})
-        elseif node == "xray:mcl_netherrack" then
-            minetest.swap_node(v, {name="mcl_nether:netherrack"})
-        elseif node == "xray:mcl_deepslate" then
-            minetest.swap_node(v, {name="mcl_deepslate:deepslate"})
-        elseif node == "xray:nc_stone" then
-            minetest.swap_node(v, {name="nc_terrain:stone"})
-        end
-        ]]
     end
-    xray.store[pname] = {}
+    return 0
 end
 
--- Attempt to repair the damage to this node (In the process of development I found my system made a ball of unrepairable goo, invisible blocks)
--- Not really needed since the nodes themselves will reset automagically
-xray.fix_pos = function (pos)
+---@param x integer
+---@param y integer
+---@param z integer
+---@param count integer
+function xray.set_node_reference_count(x, y, z, count)
+    local t3 = xray.node_reference_counts
+    local t2 = t3[x]
+    if not t2 then
+        if count == 0 then return end
+        t2 = {}
+        t3[x] = t2
+    end
+    local t1 = t2[y]
+    if not t1 then
+        if count == 0 then return end
+        t1 = {}
+        t2[y] = t1
+    end
+    if count == 0 then
+        t1[z] = nil
+        if not next(t1) then
+            t2[y] = nil
+        end
+        if not next(t2) then
+            t3[x] = nil
+        end
+    else
+        t1[z] = count
+    end
+    return 0
+end
+
+---@param pos vector
+---@param inc_amount integer?
+function xray.inc_node_reference_count(pos, inc_amount)
+    inc_amount = inc_amount or 1
+    local old_count = xray.get_node_reference_count(pos.x, pos.y, pos.z)
+    local new_count = math.max(0, old_count + inc_amount)
+    xray.set_node_reference_count(pos.x, pos.y, pos.z, new_count)
     local node = minetest.get_node_or_nil(pos)
-    if node == nil then
-        minetest.log("action", "[oretracker-xray] Failed to obtain node at "..minetest.pos_to_string(pos).." for revert (fix_pos)")
-    end
-    node = node.name
-    -- Place a switch here to identify what node should be put back here
-    if node == "xray:mtg_stone" then -- Returns cobble rather than itself!
-        minetest.swap_node(v, {name="default:stone"})
-    elseif node == "xray:mcl_stone" then -- Returns cobble rather than itself!
-        minetest.swap_node(v, {name="mcl_core:stone"})
+    if not node then return end
+    if new_count ~= 0 then
+        -- convert any newly-placed xrayable nodes too, not just if old_count == 0
+        node.name = xray.to_xray_node_map[node.name]
     else
-        -- Fix this so we can auto determine what to replace it with
-        for _, n in ipairs(xray.nodes) do
-            if string.sub(n, 0, 4) == "xray" then
-                local nod = ItemStack(n.." 1"):get_definition()
-                if n == node then
-                    --minetest.log("action", "[oretracker-xray] Located '"..n.."' for replacement.")
-                    minetest.swap_node(pos, {name=nod.drop})
-                else
-                    --minetest.log("action", "[oretracker-xray] '"..n.."' is not our current it's drop is '"..nod.drop.."'.")
+        node.name = xray.from_xray_node_map[node.name]
+    end
+    if node.name then
+        minetest.swap_node(pos, node)
+    end
+end
+
+---@param center vector
+---@param radius number
+---@param inc_amount integer?
+function xray.inc_node_reference_counts_in_sphere(center, radius, inc_amount)
+    local pos = vector.copy(center)
+    local floor_radius = math.floor(radius)
+    local radius_squared = radius * radius
+    for dx = -floor_radius, floor_radius do
+        pos.x = center.x + dx
+        for dy = -floor_radius, floor_radius do
+            pos.y = center.y + dy
+            for dz = -floor_radius, floor_radius do
+                pos.z = center.z + dz
+                if dx * dx + dy * dy + dz * dz < radius_squared then
+                    xray.inc_node_reference_count(pos, inc_amount)
                 end
             end
         end
     end
-    --[[
-    -- Fix this so we can auto determine what to replace it with
-    if node == "xray:mtg_stone" then
-        minetest.swap_node(pos, {name="default:stone"})
-    elseif node == "xray:mtg_dstone" then
-        minetest.swap_node(pos, {name="default:desert_stone"})
-    elseif node == "xray:mtg_sstone" then
-        minetest.swap_node(pos, {name="default:sandstone"})
-    elseif node == "xray:mtg_dsstone" then
-        minetest.swap_node(pos, {name="default:desert_sandstone"})
-    elseif node == "xray:mtg_ssstone" then
-        minetest.swap_node(pos, {name="default:silver_sandstone"})
-    elseif node == "xray:mcl_stone" then
-        minetest.swap_node(pos, {name="mcl_core:stone"})
-    elseif node == "xray:mcl_granite" then
-        minetest.swap_node(pos, {name="mcl_core:granite"})
-    elseif node == "xray:mcl_andesite" then
-        minetest.swap_node(pos, {name="mcl_core:andesite"})
-    elseif node == "xray:mcl_diorite" then
-        minetest.swap_node(pos, {name="mcl_core:diorite"})
-    elseif node == "xray:mcl_sstone" then
-        minetest.swap_node(pos, {name="mcl_core:sandstone"})
-    elseif node == "xray:mcl_rsstone" then
-        minetest.swap_node(pos, {name="mcl_core:redsandstone"})
-    elseif node == "xray:mcl_bstone" then
-        minetest.swap_node(pos, {name="mcl_blackstone:blackstone"})
-    elseif node == "xray:mcl_basalt" then
-        minetest.swap_node(pos, {name="mcl_blackstone:basalt"})
-    elseif node == "xray:mcl_netherrack" then
-        minetest.swap_node(pos, {name="mcl_nether:netherrack"})
-    elseif node == "xray:mcl_deepslate" then
-        minetest.swap_node(pos, {name="mcl_deepslate:deepslate"})
-    elseif node == "xray:nc_stone" then
-        minetest.swap_node(pos, {name="nc_terrain:stone"})
+end
+
+---@class vector
+---@field x number
+---@field y number
+---@field z number
+
+---@class OnlinePlayerState
+---@field online_mark boolean
+---@field last_pos vector?
+---@field hud number?
+
+---@type table<string, OnlinePlayerState>
+xray.online_player_states = {}
+
+function xray.clear_player_online_marks()
+    for _, online_player_state in pairs(xray.online_player_states) do
+        online_player_state.online_mark = false
     end
-    ]]
+end
+
+---@param player_names string[]|string
+function xray.remove_players(player_names)
+    if type(player_names) ~= "table" then
+        player_names = {player_names}
+    end
+    for _, player_name in ipairs(player_names) do
+        local state = xray.online_player_states[player_name]
+        if state then
+            xray.online_player_states[player_name] = nil
+            if state.hud then
+                local player = minetest.get_player_by_name(player_name)
+                if player then
+                    player:hud_remove(state.hud)
+                end
+            end
+            if state.last_pos then
+                xray.inc_node_reference_counts_in_sphere(state.last_pos, xray.detect_range, -1)
+            end
+        end
+    end
+end
+
+function xray.remove_players_without_online_mark()
+    local remove_list = {}
+    for player_name, online_player_state in pairs(xray.online_player_states) do
+        if not online_player_state.online_mark then
+            remove_list[#remove_list + 1] = player_name
+        end
+    end
+    xray.remove_players(remove_list)
+end
+
+---@param player_name string
+function xray.add_or_update_online_player(player_name)
+    local player = minetest.get_player_by_name(player_name)
+    if not player then
+        return
+    end
+    local pos = player:get_pos()
+    if not pos then
+        return
+    end
+    pos = vector.round(pos)
+    local state = xray.online_player_states[player_name]
+    if not state then
+        state = {
+            online_mark = true,
+        }
+        xray.online_player_states[player_name] = state
+    end
+    state.online_mark = true
+    if state.hud then
+        xray.inc_node_reference_counts_in_sphere(pos, xray.detect_range, 1)
+    else
+        pos = nil
+    end
+    if state.last_pos then
+        xray.inc_node_reference_counts_in_sphere(state.last_pos, xray.detect_range, -1)
+    end
+    state.last_pos = pos
+end
+
+---@param player_name string
+---@return integer?
+function xray.get_player_hud(player_name)
+    local state = xray.online_player_states[player_name]
+    if not state then
+        return nil
+    end
+    return state.hud
 end
