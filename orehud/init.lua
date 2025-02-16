@@ -127,6 +127,8 @@ orehud.add_ores = function ()
         end
     end
     local extra_ores = {
+        "catrealm_ores:silver_ore",
+        "catrealm_ores:tuxzite_ore",
         "caverealms:glow_amethyst_ore",
         "caverealms:glow_emerald_ore",
         "caverealms:glow_ore",
