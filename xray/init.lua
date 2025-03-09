@@ -23,23 +23,20 @@ xray.light_level = 4 -- From 0-14
 --local fix_mode = false
 
 -- This attempts to detect the gamemode
-if not minetest.registered_nodes["default:stone"] then
-    if not minetest.registered_nodes["mcl_core:stone"] then
-        if not minetest.registered_nodes["nc_terrain:stone"] then
-            xray.gamemode = "N/A"
-        else
-            xray.gamemode = "NC"
-        end
+-- check mcl_core:stone first, since x_farming registers default:stone as an alias
+if minetest.registered_nodes["mcl_core:stone"] then
+    -- Attempt to determine if it's MCL5 or MCL2
+    if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
+        xray.gamemode = "MCL2"
     else
-        -- Attempt to determine if it's MCL5 or MCL2
-        if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
-            xray.gamemode = "MCL2"
-        else
-            xray.gamemode = "MCL5"
-        end
+        xray.gamemode = "MCL5"
     end
-else
+elseif minetest.registered_nodes["default:stone"] then
     xray.gamemode = "MTG"
+elseif minetest.registered_nodes["nc_terrain:stone"] then
+    xray.gamemode = "NC"
+else
+    xray.gamemode = "N/A"
 end
 
 minetest.log("action", "[oretracker-xray] Detected game "..xray.gamemode..".")

@@ -18,24 +18,20 @@ orehud.detect_range = 8 -- Range in blocks
 orehud.scan_frequency = 3 -- Frequency in seconds
 
 -- This attempts to detect the gamemode
-if not minetest.registered_nodes["default:stone"] then
-    if not minetest.registered_nodes["mcl_core:stone"] then
-        if minetest.registered_nodes["nc_terrain:stone"] then
-            orehud.gamemode = "NC"
-        else
-            orehud.gamemode = "N/A"
-        end
+-- check mcl_core:stone first, since x_farming registers default:stone as an alias
+if minetest.registered_nodes["mcl_core:stone"] then
+    -- Attempt to determine if it's MCL5 or MCL2
+    if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
+        orehud.gamemode = "MCL2"
     else
-        orehud.gamemode = "MCL"
-        -- Attempt to determine if it's MCL5 or MCL2
-        if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
-            orehud.gamemode = "MCL2"
-        else
-            orehud.gamemode = "MCL5"
-        end
+        orehud.gamemode = "MCL5"
     end
-else
+elseif minetest.registered_nodes["default:stone"] then
     orehud.gamemode = "MTG"
+elseif minetest.registered_nodes["nc_terrain:stone"] then
+    orehud.gamemode = "NC"
+else
+    orehud.gamemode = "N/A"
 end
 
 minetest.log("action", "[oretracker-orehud] Detected game "..orehud.gamemode..".")
