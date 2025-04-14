@@ -129,6 +129,22 @@ orehud.ignore_set = {
 dofile(orehud.modpath .. "/api.lua")
 
 orehud.add_ores = function ()
+    local ignore_worklist = {}
+    for name, _ in pairs(orehud.ignore_set) do
+        ignore_worklist[#ignore_worklist + 1] = name
+    end
+    local i = 1
+    while i <= #ignore_worklist do
+        local name = ignore_worklist[i]
+        local alias = minetest.registered_aliases[name]
+        if alias ~= nil then
+            if orehud.ignore_set[alias] == nil then
+                ignore_worklist[#ignore_worklist + 1] = alias
+            end
+            orehud.ignore_set[alias] = true
+        end
+        i = i + 1
+    end
     for _, item in pairs(minetest.registered_ores) do
         if type(item.ore) == "string" and item.ore_type ~= "stratum" and item.ore_type ~= "sheet" then
             if orehud.ignore_set[item.ore] == nil then
