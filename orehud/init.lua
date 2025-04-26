@@ -63,6 +63,7 @@ orehud.ignore_set = {
     ["default:lava_source"] = true,
     ["default:silver_sand"] = true,
     ["df_underworld_items:glowstone"] = true,
+    ["dorwinion:dorwinion"] = true,
     ["ethereal:sandy"] = true,
     ["everness:bone"] = true,
     ["everness:coral_desert_stone"] = true,
