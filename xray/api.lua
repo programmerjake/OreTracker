@@ -22,11 +22,13 @@ function xray.register_xrayable_node(name, tiles)
         return nil
     end
     orig = table.copy(orig)
+    groups = table.copy(orig.groups or {})
+    groups.not_in_creative_inventory = 1
     local xray_name = "xray:" .. string.gsub(name, ":", "__")
     local def = {
         description = xray.S("Xray Stone"),
         tiles = tiles or { "xray_stone.png" },
-        groups = orig.groups,
+        groups = groups,
         drop = orig.drop,
         drawtype = "glasslike",
         stack_max = 1,
