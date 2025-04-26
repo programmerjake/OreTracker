@@ -84,7 +84,54 @@ minetest.register_chatcommand("xray", {
     end,
 })
 
+-- nodes names which should be ignored despite being in some biome
+xray.ignore_set = {
+    ["air"] = true,
+}
 minetest.register_on_mods_loaded(function ()
+    local nodes_to_register = {
+        ["mapgen_stone"] = true,
+        ["mapgen_desert_stone"] = true,
+    }
+    for _, biome in pairs(minetest.registered_biomes) do
+        if biome.node_stone then
+            nodes_to_register[biome.node_stone] = true
+        end
+    end
+    for node, _ in pairs(nodes_to_register) do
+        if minetest.registered_aliases[node] then
+            node = minetest.registered_aliases[node]
+        end
+        if minetest.registered_nodes[node] and not xray.ignore_set[node] then
+            xray.register_xrayable_node(node)
+        end
+    end
+    local result = "Xrayable nodes:\n"
+    for _, name in ipairs(xray.xrayable_node_list) do
+        local xray_name = xray.to_xray_node_map[name]
+        local xray_def = minetest.registered_nodes[xray_name]
+        local tiles = xray_def.tiles
+        local tiles_is_empty = true
+        local tiles_is_default = false
+        for k, v in pairs(tiles) do
+            if k == 1 and v == "xray_stone.png" and tiles_is_empty then
+                tiles_is_default = true
+            else
+                tiles_is_empty = false
+                tiles_is_default = false
+                break
+            end
+            tiles_is_empty = false
+        end
+        local tiles_str = ""
+        if not tiles_is_default then
+            tiles_str = ", " .. dump(tiles)
+        end
+        local item = string.format("xray.register_xrayable_node(\"%s\"%s)\n", name, tiles_str)
+        result = result .. item
+    end
+    minetest.log("action", "[oretracker-xray] Found " .. #xray.xrayable_node_list .. " nodes configured.")
+    minetest.log("action", "[oretracker-xray] " .. result)
     minetest.register_lbm({
         label = "replace xray nodes with original nodes",
         name = ":xray:replace_xray_with_original",
