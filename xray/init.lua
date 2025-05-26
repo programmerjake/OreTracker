@@ -90,8 +90,36 @@ xray.ignore_set = {
 }
 minetest.register_on_mods_loaded(function ()
     local nodes_to_register = {
-        ["mapgen_stone"] = true,
         ["mapgen_desert_stone"] = true,
+        ["mapgen_stone"] = true,
+        ["underch:afualite"] = true,
+        ["underch:amphibolite"] = true,
+        ["underch:andesite"] = true,
+        ["underch:aplite"] = true,
+        ["underch:basalt"] = true,
+        ["underch:dark_vindesite"] = true,
+        ["underch:diorite"] = true,
+        ["underch:dolomite"] = true,
+        ["underch:emutite"] = true,
+        ["underch:gabbro"] = true,
+        ["underch:gneiss"] = true,
+        ["underch:granite"] = true,
+        ["underch:green_slimestone"] = true,
+        ["underch:hektorite"] = true,
+        ["underch:limestone"] = true,
+        ["underch:marble"] = true,
+        ["underch:omphyrite"] = true,
+        ["underch:pegmatite"] = true,
+        ["underch:peridotite"] = true,
+        ["underch:phonolite"] = true,
+        ["underch:phylite"] = true,
+        ["underch:purple_slimestone"] = true,
+        ["underch:quartzite"] = true,
+        ["underch:red_slimestone"] = true,
+        ["underch:schist"] = true,
+        ["underch:sichamine"] = true,
+        ["underch:slate"] = true,
+        ["underch:vindesite"] = true,
     }
     for _, biome in pairs(minetest.registered_biomes) do
         if biome.node_stone then
