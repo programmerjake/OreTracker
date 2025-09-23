@@ -12,8 +12,9 @@ xray.p_stats = {}
 -- Recommended range is 6 blocks
 xray.detect_range = 6 -- Range in blocks
 -- 0 or negative is instantaneous updates (Which greatly impacts the server/client)
--- Recommended frequency is 1 second.
-xray.scan_frequency = 1 -- Frequency in seconds
+-- Recommended rate is once every 0.1 second.
+-- this is actually a period, not a frequency, but keep the name for backwards compatibility.
+xray.scan_frequency = 0.1 -- Rate to scan -- value is number of seconds between scans.
 -- Light level that xray nodes emit (Max is 14 min is 0)
 -- Recommended light_level is 4. (Provides enough light to use the mod, might need to use torches if you want it lighter, or adjust here)
 xray.light_level = 4 -- From 0-14
