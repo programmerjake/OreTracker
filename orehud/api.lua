@@ -2,8 +2,8 @@
 -- Adds an "ore" node to track, only if that node actually is a valid node
 orehud.add_ore = function(orename, color)
     assert(type(orename) == "string", "ore name must be a string")
-    if not minetest.registered_nodes[orename] then
-        minetest.log("action", "[oretracker-orehud] Failed to add '" .. orename .. "' as it is a unregistered node.")
+    if not core.registered_nodes[orename] then
+        core.log("action", "[oretracker-orehud] Failed to add '" .. orename .. "' as it is a unregistered node.")
         return
     end
     if color == nil then
@@ -77,9 +77,9 @@ end
 -- Adds a waypoint to the given player's HUD, given title and color
 orehud.add_pos = function(pname, pos, title, color)
     if not title then
-        title = minetest.pos_to_string(pos)
+        title = core.pos_to_string(pos)
     end
-    local player = minetest.get_player_by_name(pname)
+    local player = core.get_player_by_name(pname)
     local wps = orehud.store[pname] or {}
     if not color then
         color = 0xffffff
@@ -98,7 +98,7 @@ end
 
 -- Clears all waypoints from the given player's HUD
 orehud.clear_pos = function(pname)
-    local player = minetest.get_player_by_name(pname)
+    local player = core.get_player_by_name(pname)
     local wps = orehud.store[pname] or {}
     for i, v in ipairs(wps) do
         player:hud_remove(v)

@@ -4,8 +4,8 @@
 -- A public API
 orehud = {}
 
-orehud.S = minetest.get_translator("orehud")
-orehud.modpath = minetest.get_modpath("orehud")
+orehud.S = core.get_translator("orehud")
+orehud.modpath = core.get_modpath("orehud")
 orehud.store = {}
 orehud.p_stats = {}
 
@@ -19,22 +19,22 @@ orehud.scan_frequency = 3 -- Frequency in seconds
 
 -- This attempts to detect the gamemode
 -- check mcl_core:stone first, since x_farming registers default:stone as an alias
-if minetest.registered_nodes["mcl_core:stone"] then
+if core.registered_nodes["mcl_core:stone"] then
     -- Attempt to determine if it's MCL5 or MCL2
-    if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
+    if not core.registered_nodes["mcl_deepslate:deepslate"] then
         orehud.gamemode = "MCL2"
     else
         orehud.gamemode = "MCL5"
     end
-elseif minetest.registered_nodes["default:stone"] then
+elseif core.registered_nodes["default:stone"] then
     orehud.gamemode = "MTG"
-elseif minetest.registered_nodes["nc_terrain:stone"] then
+elseif core.registered_nodes["nc_terrain:stone"] then
     orehud.gamemode = "NC"
 else
     orehud.gamemode = "N/A"
 end
 
-minetest.log("action", "[oretracker-orehud] Detected game "..orehud.gamemode..".")
+core.log("action", "[oretracker-orehud] Detected game " .. orehud.gamemode .. ".")
 
 -- a list of what ore names we want to follow
 orehud.ores = {}
@@ -137,7 +137,7 @@ orehud.add_ores = function ()
     local i = 1
     while i <= #ignore_worklist do
         local name = ignore_worklist[i]
-        local alias = minetest.registered_aliases[name]
+        local alias = core.registered_aliases[name]
         if alias ~= nil then
             if orehud.ignore_set[alias] == nil then
                 ignore_worklist[#ignore_worklist + 1] = alias
@@ -146,7 +146,7 @@ orehud.add_ores = function ()
         end
         i = i + 1
     end
-    for _, item in pairs(minetest.registered_ores) do
+    for _, item in pairs(core.registered_ores) do
         if type(item.ore) == "string" and item.ore_type ~= "stratum" and item.ore_type ~= "sheet" then
             if orehud.ignore_set[item.ore] == nil then
                 orehud.add_ore(item.ore)
@@ -194,13 +194,13 @@ orehud.add_ores = function ()
         "technic:mineral_sulfur",
     }
     for _, name in ipairs(extra_ores) do
-        if minetest.registered_nodes[name] then
+        if core.registered_nodes[name] then
             orehud.add_ore(name)
         end
     end
 end
 
-minetest.register_on_mods_loaded(function()
+core.register_on_mods_loaded(function()
     orehud.add_ores()
     local result = "Ores and colors:\n"
     local line = ""
@@ -212,37 +212,41 @@ minetest.register_on_mods_loaded(function()
         end
         line = line .. item
     end
-    minetest.log("action", "[oretracker-orehud] Found " .. #orehud.ores .. " ores configured.")
-    minetest.log("action", "[oretracker-orehud] " .. result .. line)
+    core.log("action", "[oretracker-orehud] Found " .. #orehud.ores .. " ores configured.")
+    core.log("action", "[oretracker-orehud] " .. result .. line)
 end)
 
 -- Itterates an area of nodes for "ores", then adds a waypoint at that nodes position for that "ore".
 orehud.check_player = function(player)
     local p = player
-    if not minetest.is_player(p) then
-        p = minetest.get_player_by_name(p)
+    if not core.is_player(p) then
+        p = core.get_player_by_name(p)
     end
     local pos = p:get_pos()
     local pname = p:get_player_name()
     local p1 = vector.subtract(pos, {x = orehud.detect_range, y = orehud.detect_range, z = orehud.detect_range})
     local p2 = vector.add(pos, {x = orehud.detect_range, y = orehud.detect_range, z = orehud.detect_range})
-    local area = minetest.find_nodes_in_area(p1, p2, orehud.ores)
+    local area = core.find_nodes_in_area(p1, p2, orehud.ores)
     for i=1, #area do
-        local node = minetest.get_node_or_nil(area[i])
+        local node = core.get_node_or_nil(area[i])
         if node == nil then
-            minetest.log("action", "[oretracker-orehud] Failed to obtain node at "..minetest.pos_to_string(area[1], 1)..".")
+            core.log("action", "[oretracker-orehud] Failed to obtain node at " .. core.pos_to_string(area[1], 1) .. ".")
         else
             local delta = vector.subtract(area[i], pos)
             local distance = (delta.x*delta.x) + (delta.y*delta.y) + (delta.z*delta.z)
             if distance <= orehud.detect_range*orehud.detect_range then
                 distance = string.format("%.0f", math.sqrt(distance))
                 local block = "?"
-                local def = minetest.registered_nodes[node.name] or nil
+                local def = core.registered_nodes[node.name] or nil
                 if def ~= nil then
                     block = def.short_description or def.description
                 end
                 if block == "?" then
-                    minetest.log("action", "[oretracker-orehud] Found '"..node.name.."' at "..minetest.pos_to_string(area[i], 1).." which is "..distance.." away from '"..pname..".")
+                    core.log("action",
+                        "[oretracker-orehud] Found '" ..
+                        node.name ..
+                        "' at " .. core.pos_to_string(area[i], 1) .. " which is " .. distance ..
+                        " away from '" .. pname .. ".")
                     block = node.name
                 end
                 -- Make a waypoint with the nodes name
@@ -255,13 +259,13 @@ end
 -- Now register with minetest to actually do something
 
 local interval = 0
-minetest.register_globalstep(function(dtime)
+core.register_globalstep(function(dtime)
     interval = interval - dtime
     if interval <= 0 then
-        for _, player in ipairs(minetest.get_connected_players()) do
+        for _, player in ipairs(core.get_connected_players()) do
             local p = player
-            if not minetest.is_player(p) then
-                p = minetest.get_player_by_name(p)
+            if not core.is_player(p) then
+                p = core.get_player_by_name(p)
             end
             -- I need to clean up the player's ore waypoints added by the latter code
             orehud.clear_pos(p:get_player_name())
@@ -274,11 +278,11 @@ minetest.register_globalstep(function(dtime)
     end
 end)
 
-minetest.register_on_joinplayer(function(player, laston)
+core.register_on_joinplayer(function(player, laston)
     orehud.p_stats[player:get_player_name()] = nil
 end)
 
-minetest.register_on_leaveplayer(function(player, timeout)
+core.register_on_leaveplayer(function(player, timeout)
     local indx = 0
     local found = false
     for pname, val in ipairs(orehud.p_stats) do
@@ -295,25 +299,25 @@ minetest.register_on_leaveplayer(function(player, timeout)
 end)
 
 -- A priv for those to use this power
-minetest.register_privilege("orehud", {
+core.register_privilege("orehud", {
     description = "Oretracker Orehud Priv",
     give_to_singleplayer = true -- Also given to those with server priv
 })
 
-minetest.register_chatcommand("orehud", {
+core.register_chatcommand("orehud", {
     privs = {
         shout = true,
         orehud = true -- Require our own priv
     },
     func = function(name, param)
         if orehud.p_stats[name] then
-            local p = minetest.get_player_by_name(name)
+            local p = core.get_player_by_name(name)
             if p ~= nil then
                 p:hud_remove(orehud.p_stats[name])
                 orehud.p_stats[name] = nil
             end
         else
-            local p = minetest.get_player_by_name(name)
+            local p = core.get_player_by_name(name)
             if p ~= nil then
                 orehud.p_stats[name] = p:hud_add({
                     hud_elem_type = "text",

@@ -1,15 +1,15 @@
 ---@type string
 local game_mode
-if not minetest.registered_nodes["default:stone"] then
-    if not minetest.registered_nodes["mcl_core:stone"] then
-        if not minetest.registered_nodes["nc_terrain:stone"] then
+if not core.registered_nodes["default:stone"] then
+    if not core.registered_nodes["mcl_core:stone"] then
+        if not core.registered_nodes["nc_terrain:stone"] then
             game_mode = "N/A"
         else
             game_mode = "NC"
         end
     else
         -- Attempt to determine if it's MCL5 or MCL2
-        if not minetest.registered_nodes["mcl_deepslate:deepslate"] then
+        if not core.registered_nodes["mcl_deepslate:deepslate"] then
             game_mode = "MCL2"
         else
             game_mode = "MCL5"
@@ -26,7 +26,7 @@ end
 local function register_xrayable_node_and_alias(old_xray_alias, name, tiles)
     local xray_name = xray.register_xrayable_node(name, tiles)
     if xray_name then
-        minetest.register_alias(old_xray_alias, xray_name)
+        core.register_alias(old_xray_alias, xray_name)
     end
     return xray_name
 end

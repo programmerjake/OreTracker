@@ -9,16 +9,16 @@ xray.xrayable_node_list = {}
 ---@param tiles table?
 ---@return string?
 function xray.register_xrayable_node(name, tiles)
-    if minetest.registered_aliases[name] then
-        name = minetest.registered_aliases[name]
+    if core.registered_aliases[name] then
+        name = core.registered_aliases[name]
     end
     assert(xray.from_xray_node_map[name] == nil, "can't register_xrayable_node on an xray node: " .. name)
     if xray.to_xray_node_map[name] then
         return xray.to_xray_node_map[name]
     end
-    local orig = minetest.registered_nodes[name]
+    local orig = core.registered_nodes[name]
     if not orig then
-        minetest.log("action", "[oretracker-xray] Failed to add '" .. name .. "' as it is a unregistered node.")
+        core.log("action", "[oretracker-xray] Failed to add '" .. name .. "' as it is a unregistered node.")
         return nil
     end
     orig = table.copy(orig)
@@ -48,7 +48,7 @@ function xray.register_xrayable_node(name, tiles)
             def[k] = v
         end
     end
-    minetest.register_node(":" .. xray_name, def)
+    core.register_node(":" .. xray_name, def)
     table.insert(xray.xrayable_node_list, name)
     xray.to_xray_node_map[name] = xray_name
     xray.from_xray_node_map[xray_name] = name
@@ -113,7 +113,7 @@ function xray.inc_node_reference_count(pos, inc_amount)
     local old_count = xray.get_node_reference_count(pos.x, pos.y, pos.z)
     local new_count = math.max(0, old_count + inc_amount)
     xray.set_node_reference_count(pos.x, pos.y, pos.z, new_count)
-    local node = minetest.get_node_or_nil(pos)
+    local node = core.get_node_or_nil(pos)
     if not node then return end
     if new_count ~= 0 then
         -- convert any newly-placed xrayable nodes too, not just if old_count == 0
@@ -122,7 +122,7 @@ function xray.inc_node_reference_count(pos, inc_amount)
         node.name = xray.from_xray_node_map[node.name]
     end
     if node.name then
-        minetest.swap_node(pos, node)
+        core.swap_node(pos, node)
     end
 end
 
@@ -176,7 +176,7 @@ function xray.remove_players(player_names)
         if state then
             xray.online_player_states[player_name] = nil
             if state.hud then
-                local player = minetest.get_player_by_name(player_name)
+                local player = core.get_player_by_name(player_name)
                 if player then
                     player:hud_remove(state.hud)
                 end
@@ -200,7 +200,7 @@ end
 
 ---@param player_name string
 function xray.add_or_update_online_player(player_name)
-    local player = minetest.get_player_by_name(player_name)
+    local player = core.get_player_by_name(player_name)
     if not player then
         return
     end
