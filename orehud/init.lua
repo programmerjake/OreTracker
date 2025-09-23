@@ -200,7 +200,7 @@ orehud.add_ores = function ()
     end
 end
 
-core.register_on_mods_loaded(function()
+core.after(0, function()
     orehud.add_ores()
     local result = "Ores and colors:\n"
     local line = ""
