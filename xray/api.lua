@@ -5,6 +5,138 @@ xray.from_xray_node_map = {}
 ---@type string[]
 xray.xrayable_node_list = {}
 
+---@class XrayDefinitionFieldOverrideArgs
+---@field node_name string
+---@field xray_name string
+---@field tiles table
+---@field field_name any
+---@field orig_field_value any?
+
+---@type table<string, string | number | boolean | table | fun(args: XrayDefinitionFieldOverrideArgs): any?>
+local xray_definition_field_overrides = {
+    drawtype = "glasslike",
+    stack_max = 1,
+    sunlight_propagates = true,
+    legacy_mineral = true,
+    light_source = xray.light_level,
+}
+
+function xray_definition_field_overrides.groups(args)
+    local groups = table.copy(args.orig_field_value or {})
+    groups.not_in_creative_inventory = 1
+    return groups
+end
+
+function xray_definition_field_overrides.description(args)
+    return "Xray " .. tostring(args.orig_field_value)
+end
+
+function xray_definition_field_overrides.tiles(args)
+    return args.tiles or { "xray_stone.png" }
+end
+
+function xray_definition_field_overrides.drop(args)
+    local orig = args.orig_field_value
+    if orig == "" or orig == nil then
+        return args.node_name
+    end
+    return orig
+end
+
+---@param args XrayDefinitionFieldOverrideArgs
+---@return any
+local function generate_xray_definition_field(args)
+    local override = xray_definition_field_overrides[args.field_name]
+    if override == nil then
+        if type(args.field_name) == "string" and string.sub(args.field_name, 1, 1) == "_" then
+            local field_value = args.orig_field_value
+            if type(field_value) == "table" then
+                field_value = table.copy(field_value)
+            end
+            return field_value
+        end
+        return nil
+    elseif type(override) == "function" then
+        return override(args)
+    else
+        return override
+    end
+end
+
+local function generate_xray_definition(node_name, xray_name, tiles, orig)
+    local def = {}
+    ---@type XrayDefinitionFieldOverrideArgs
+    local args = {
+        node_name = node_name,
+        xray_name = xray_name,
+        tiles = tiles or core.registered_nodes[xray_name].tiles,
+    }
+    for k, _ in pairs(xray_definition_field_overrides) do
+        args.field_name = k
+        args.orig_field_value = orig[k]
+        def[k] = generate_xray_definition_field(args)
+    end
+    for k, v in pairs(orig) do
+        args.field_name = k
+        args.orig_field_value = v
+        def[k] = generate_xray_definition_field(args)
+    end
+    def.name = nil
+    def.type = nil
+    return def
+end
+
+local old_override_item = core.override_item
+
+function core.override_item(name, redefinition, del_fields)
+    local final_name = name
+    if core.registered_aliases[final_name] then
+        final_name = core.registered_aliases[final_name]
+    end
+    local xray_name = xray.to_xray_node_map[final_name]
+    if xray_name then
+        -- propagate to xray node
+        local xray_redefinition = {}
+        local xray_del_fields = {}
+        ---@type XrayDefinitionFieldOverrideArgs
+        local args = {
+            node_name = final_name,
+            xray_name = xray_name,
+            tiles = core.registered_nodes[xray_name].tiles,
+        }
+        for k, v in pairs(redefinition) do
+            assert(k ~= "name" or k ~= "type")
+            args.field_name = k
+            args.orig_field_value = v
+            v = generate_xray_definition_field(args)
+            if v == nil then
+                xray_del_fields[#xray_del_fields + 1] = k
+            else
+                xray_redefinition[k] = v
+            end
+        end
+        for _, k in ipairs(del_fields or {}) do
+            assert(k ~= "name" or k ~= "type")
+            args.field_name = k
+            args.orig_field_value = nil
+            local v = generate_xray_definition_field(args)
+            if v == nil then
+                xray_del_fields[#xray_del_fields + 1] = k
+            else
+                xray_redefinition[k] = v
+            end
+        end
+        core.log("verbose",
+            "[xray] also overriding xray node: " ..
+            xray_name .. "\n" .. dump({ redefinition = xray_redefinition, del_fields = xray_del_fields }))
+        old_override_item(xray_name, xray_redefinition, xray_del_fields)
+    elseif xray.from_xray_node_map[final_name] then
+        return -- don't allow overriding xray nodes
+    end
+    return old_override_item(name, redefinition, del_fields)
+end
+
+---
 ---@param name string
 ---@param tiles table?
 ---@return string?
@@ -21,33 +153,8 @@ function xray.register_xrayable_node(name, tiles)
         core.log("action", "[oretracker-xray] Failed to add '" .. name .. "' as it is a unregistered node.")
         return nil
     end
-    orig = table.copy(orig)
-    groups = table.copy(orig.groups or {})
-    groups.not_in_creative_inventory = 1
     local xray_name = "xray:" .. string.gsub(name, ":", "__")
-    local def = {
-        description = xray.S("Xray Stone"),
-        tiles = tiles or { "xray_stone.png" },
-        groups = groups,
-        drop = orig.drop,
-        drawtype = "glasslike",
-        stack_max = 1,
-        sunlight_propagates = true,
-        legacy_mineral = true,
-        light_source = xray.light_level,
-        sounds = orig.sounds,
-    }
-    if def.drop == "" or def.drop == nil then
-        def.drop = name
-    end
-    for k, v in pairs(orig) do
-        if type(k) == "string" and string.sub(k, 1, 1) == "_" then
-            if type(v) == "table" then
-                v = table.copy(v)
-            end
-            def[k] = v
-        end
-    end
+    local def = generate_xray_definition(name, xray_name, tiles or { "xray_stone.png" }, orig)
     core.register_node(":" .. xray_name, def)
     table.insert(xray.xrayable_node_list, name)
     xray.to_xray_node_map[name] = xray_name
