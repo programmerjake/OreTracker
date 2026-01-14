@@ -1,3 +1,7 @@
+local hud_elem_type_k = "hud_elem_type"
+if core.features.hud_def_type_field then
+    hud_elem_type_k = "type"
+end
 
 -- Adds an "ore" node to track, only if that node actually is a valid node
 orehud.add_ore = function(orename, color)
@@ -86,7 +90,7 @@ orehud.add_pos = function(pname, pos, title, color)
     end
     table.insert(wps,
         player:hud_add({
-            hud_elem_type = "waypoint",
+            [hud_elem_type_k] = "waypoint",
             name = title,
             text = "m",
             number = color,

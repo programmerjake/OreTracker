@@ -19,6 +19,11 @@ xray.scan_frequency = 0.1 -- Rate to scan -- value is number of seconds between 
 -- Recommended light_level is 4. (Provides enough light to use the mod, might need to use torches if you want it lighter, or adjust here)
 xray.light_level = 4 -- From 0-14
 
+local hud_elem_type_k = "hud_elem_type"
+if core.features.hud_def_type_field then
+    hud_elem_type_k = "type"
+end
+
 -- Make our api
 dofile(xray.modpath .. "/api.lua")
 dofile(xray.modpath .. "/register.lua")
@@ -72,7 +77,7 @@ core.register_chatcommand("xray", {
         local player = core.get_player_by_name(name)
         if state and player then
             state.hud = player:hud_add({
-                hud_elem_type = "text",
+                [hud_elem_type_k] = "text",
                 position = {x = 0.9, y = 0.9},
                 offset = {x = 0.0, y = 0.0},
                 text = " XRAY ",

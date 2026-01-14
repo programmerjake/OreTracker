@@ -17,6 +17,11 @@ orehud.detect_range = 8 -- Range in blocks
 -- Recommended default is 3 seconds.
 orehud.scan_frequency = 3 -- Frequency in seconds
 
+local hud_elem_type_k = "hud_elem_type"
+if core.features.hud_def_type_field then
+    hud_elem_type_k = "type"
+end
+
 -- This attempts to detect the gamemode
 -- check mcl_core:stone first, since x_farming registers default:stone as an alias
 if core.registered_nodes["mcl_core:stone"] then
@@ -320,7 +325,7 @@ core.register_chatcommand("orehud", {
             local p = core.get_player_by_name(name)
             if p ~= nil then
                 orehud.p_stats[name] = p:hud_add({
-                    hud_elem_type = "text",
+                    [hud_elem_type_k] = "text",
                     position = {x = 0.9, y = 0.87},
                     offset = {x = 0.0, y = 0.0},
                     text = "OREHUD",
